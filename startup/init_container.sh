@@ -10,12 +10,10 @@ A P P   S E R V I C E   O N   L I N U X
 
 Documentation: http://aka.ms/webapp-linux
 NodeJS quickstart: https://aka.ms/node-qs
+NodeJS Version : `node --version`
 
 EOL
 cat /etc/motd
-
-sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
-service ssh start
 
 mkdir "$PM2HOME"
 chmod 777 "$PM2HOME"
@@ -24,32 +22,29 @@ ln -s /home/LogFiles "$PM2HOME"/logs
 # Get environment variables to show up in SSH session
 eval $(printenv | sed -n "s/^\([^=]\+\)=\(.*\)$/export \1=\2/p" | sed 's/"/\\\"/g' | sed '/=/s//="/' | sed 's/$/"/' >> /etc/profile)
 
-#
-# Extract dependencies if required:
-#
-if [ -f "oryx-manifest.toml" ] && [ ! "$APPSVC_RUN_ZIP" = "TRUE" ] ; then
-    echo "Found 'oryx-manifest.toml', checking if node_modules was compressed..."
-    source "oryx-manifest.toml"
-    if [ ${compressedNodeModulesFile: -4} == ".zip" ]; then
-        echo "Found zip-based node_modules."
-        extractionCommand="unzip -q $compressedNodeModulesFile -d /node_modules"
-    elif [ ${compressedNodeModulesFile: -7} == ".tar.gz" ]; then
-        echo "Found tar.gz based node_modules."
-        extractionCommand="tar -xzf $compressedNodeModulesFile -C /node_modules"
-    fi
-    if [ ! -z "$extractionCommand" ]; then
-        echo "Removing existing modules directory..."
-        rm -fr /node_modules
-        mkdir -p /node_modules
-        echo "Extracting modules..."
-        $extractionCommand
-    fi
-    echo "Done."
+# starting sshd process
+sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
+/usr/sbin/sshd
+
+STARTUP_COMMAND_PATH="/opt/startup/startup.sh"
+ORYX_ARGS="-appPath /home/site/wwwroot -output $STARTUP_COMMAND_PATH -usePM2 -defaultApp=/opt/startup/default-static-site.js -userStartupCommand '$@'"
+
+if [ $APPSVC_REMOTE_DEBUGGING = "TRUE" ]; then
+    ORYX_ARGS="-remoteDebug -debugPort $APPSVC_TUNNEL_PORT $ORYX_ARGS"
+elif [ "$APPSVC_REMOTE_DEBUGGING_BREAK" = "TRUE" ]; then
+    ORYX_ARGS="-remoteDebugBrk -debugPort $APPSVC_TUNNEL_PORT $ORYX_ARGS"
 fi
 
-echo "$@" > /opt/startup/startupCommand
-node /opt/startup/generateStartupCommand.js
+if [ -f "oryx-manifest.toml" ] && [ "$APPSVC_RUN_ZIP" = "TRUE" ]; then
+    # NPM adds the current directory's node_modules/.bin folder to PATH before it runs, so commands in
+    # "npm start" can files there. Since we move node_modules, we have to add it to the path ourselves.
+    echo 'Fixing up path'
+    export PATH=/node_modules/.bin:$PATH
+    echo "$PATH"
+fi
 
-STARTUPCOMMAND=$(cat /opt/startup/startupCommand)
+eval oryx $ORYX_ARGS
+
+STARTUPCOMMAND=$(cat $STARTUP_COMMAND_PATH)
 echo "Running $STARTUPCOMMAND"
-eval "exec $STARTUPCOMMAND"
+$STARTUP_COMMAND_PATH
