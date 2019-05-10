@@ -1,31 +1,45 @@
 FROM mcr.microsoft.com/oryx/node-8.0:20190508.1
 LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.com>"
 
-RUN echo "ipv6" >> /etc/modules
+RUN  echo "deb http://deb.debian.org/debian/ jessie main" > /etc/apt/sources.list \
+  && echo "deb-src http://deb.debian.org/debian/ jessie main" >> /etc/apt/sources.list \
+  && echo "deb http://security.debian.org/ jessie/updates main" >> /etc/apt/sources.list \
+  && echo "deb-src http://security.debian.org/ jessie/updates main" >> /etc/apt/sources.list \
+  && echo "deb http://archive.debian.org/debian jessie-backports main" >> /etc/apt/sources.list \
+  && echo "deb-src http://archive.debian.org/debian jessie-backports main" >> /etc/apt/sources.list \
+  && echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf
 
-RUN npm install -g pm2 \
-     && mkdir -p /home/LogFiles /opt/startup \
+COPY startup /opt/startup
+COPY hostingstart.html /home/site/wwwroot/hostingstart.html
+
+RUN mkdir -p /home/LogFiles \
      && echo "root:Docker!" | chpasswd \
      && echo "cd /home" >> /etc/bash.bashrc \
-     && apt-get update \  
-     && apt-get install --yes --no-install-recommends openssh-server vim curl wget tcptraceroute openrc
+     && apt update \
+     && apt install -y --no-install-recommends openssh-server vim curl wget tcptraceroute
 
-# setup default site
 RUN rm -f /etc/ssh/sshd_config
-COPY startup /opt/startup
-COPY hostingstart.html /opt/startup
-
-# configure startup
-RUN mkdir -p /tmp
 COPY sshd_config /etc/ssh/
 
-COPY ssh_setup.sh /tmp
-RUN chmod -R +x /opt/startup \
-   && chmod -R +x /tmp/ssh_setup.sh \
-   && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null) \
-   && rm -rf /tmp/* \
-   && cd /opt/startup \
-   && npm install 
+# Workaround for https://github.com/npm/npm/issues/16892
+# Running npm install as root blows up in a  --userns-remap
+# environment.
+
+RUN chmod -R 777 /opt/startup \
+     && mkdir /opt/pm2 \
+     && chmod 777 /opt/pm2 \
+     && ln -s /opt/pm2/node_modules/pm2/bin/pm2 /usr/local/bin/pm2
+
+USER node
+
+RUN cd /opt/pm2 \
+  && npm install pm2 \
+  && cd /opt/startup \
+  && npm install
+
+USER root
+
+# End workaround
 
 ENV PORT 8080
 ENV SSH_PORT 2222
