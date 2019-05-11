@@ -3,6 +3,8 @@ LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.c
 
 RUN echo "ipv6" >> /etc/modules
 
+RUN npm install npm@5.3.0 -g
+
 RUN npm install -g pm2 \
      && mkdir -p /home/LogFiles /opt/startup \
      && echo "root:Docker!" | chpasswd \
