@@ -17,7 +17,7 @@ RUN echo "ipv6" >> /etc/modules
  USER node
 
  RUN cd /opt/pm2 \
-  && npm install pm2@5.3.0 -g \
+  && npm install pm2 -g \
   && cd /opt/startup \
   && npm install
 
