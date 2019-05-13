@@ -7,24 +7,25 @@ RUN echo "ipv6" >> /etc/modules
 # Running npm install as root blows up in a  --userns-remap
 # environment.
 
- RUN npm remove pm2 -g \
+RUN npm install npm@5.3.0 -g
+
+RUN npm remove pm2 -g \
      && mkdir -p /opt/startup \
      && chmod -R 777 /opt/startup \
      && mkdir -p /opt/pm2 \
      && chmod 777 /opt/pm2 \
-     && chmod 777 -R /usr/local/lib/node_modules \
      && ln -s /opt/pm2/node_modules/pm2/bin/pm2 /usr/local/bin/pm2
 
- USER node
+USER node
 
- RUN cd /opt/pm2 \
-  && npm install pm2 -g \
+RUN cd /opt/pm2 \
+  && npm install pm2 \
   && cd /opt/startup \
   && npm install
 
- USER root
+USER root
 
- # End workaround
+# End workaround
 
 RUN mkdir -p /home/LogFiles /opt/startup \
      && echo "root:Docker!" | chpasswd \
