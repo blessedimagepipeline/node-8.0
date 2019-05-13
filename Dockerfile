@@ -12,6 +12,7 @@ RUN echo "ipv6" >> /etc/modules
      && chmod -R 777 /opt/startup \
      && mkdir -p /opt/pm2 \
      && chmod 777 /opt/pm2 \
+     && chmod 777 /usr/local/lib/node_modules \
      && ln -s /opt/pm2/node_modules/pm2/bin/pm2 /usr/local/bin/pm2
 
  USER node
