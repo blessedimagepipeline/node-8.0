@@ -3,7 +3,26 @@ LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.c
 
 RUN echo "ipv6" >> /etc/modules
 
-RUN npm install npm@5.3.0 -g
+# Workaround for https://github.com/npm/npm/issues/16892	
+# Running npm install as root blows up in a  --userns-remap	
+# environment.	
+
+ RUN npm remove pm2 -g \
+     && chmod -R 777 /opt/startup \	
+     && mkdir /opt/pm2 \	
+     && chmod 777 /opt/pm2 \	
+     && ln -s /opt/pm2/node_modules/pm2/bin/pm2 /usr/local/bin/pm2	
+
+ USER node	
+
+ RUN cd /opt/pm2 \	
+  && npm install pm2 \	
+  && cd /opt/startup \	
+  && npm install	
+
+ USER root	
+
+ # End workaround
 
 RUN npm install -g pm2 \
      && mkdir -p /home/LogFiles /opt/startup \
