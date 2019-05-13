@@ -17,7 +17,7 @@ RUN echo "ipv6" >> /etc/modules
  USER node
 
  RUN cd /opt/pm2 \
-  && npm install pm2 \
+  && npm install pm2@5.3.0 -g \
   && cd /opt/startup \
   && npm install
 
@@ -25,8 +25,7 @@ RUN echo "ipv6" >> /etc/modules
 
  # End workaround
 
-RUN npm install -g pm2 \
-     && mkdir -p /home/LogFiles /opt/startup \
+RUN mkdir -p /home/LogFiles /opt/startup \
      && echo "root:Docker!" | chpasswd \
      && echo "cd /home" >> /etc/bash.bashrc \
      && apt-get update \  
@@ -46,8 +45,7 @@ RUN chmod -R +x /opt/startup \
    && chmod -R +x /tmp/ssh_setup.sh \
    && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null) \
    && rm -rf /tmp/* \
-   && cd /opt/startup \
-   && npm install 
+   && cd /opt/startup 
 
 ENV PORT 8080
 ENV SSH_PORT 2222
