@@ -7,7 +7,7 @@ RUN echo "ipv6" >> /etc/modules
 # Running npm install as root blows up in a  --userns-remap
 # environment.
 
-RUN npm install npm@5.3.0 -g
+RUN npm install npm@latest -g
 
 RUN npm remove pm2 -g \
      && mkdir -p /opt/startup \
