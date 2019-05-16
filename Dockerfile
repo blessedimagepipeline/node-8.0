@@ -3,32 +3,8 @@ LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.c
 
 RUN echo "ipv6" >> /etc/modules
 
-# Workaround for https://github.com/npm/npm/issues/16892
-# Running npm install as root blows up in a  --userns-remap
-# environment.
-
-
-RUN npm remove pm2 -g \
-     && mkdir -p /opt/startup \
-     && chmod -R 777 /opt/startup \
-     && mkdir -p /opt/pm2 \
-     && chmod 777 /opt/pm2 \
-     && ln -s /opt/pm2/node_modules/pm2/bin/pm2 /usr/local/bin/pm2 \
-     && chmod -R 777 /usr/local 
-
-
-USER node
-
-RUN cd /opt/pm2 \
-  && npm install pm2 \
-  && cd /opt/startup \
-  && npm install
-
-USER root
-
-# End workaround
-
-RUN mkdir -p /home/LogFiles /opt/startup \
+RUN npm install -g pm2 \
+     && mkdir -p /home/LogFiles /opt/startup \
      && echo "root:Docker!" | chpasswd \
      && echo "cd /home" >> /etc/bash.bashrc \
      && apt-get update \  
@@ -48,7 +24,8 @@ RUN chmod -R +x /opt/startup \
    && chmod -R +x /tmp/ssh_setup.sh \
    && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null) \
    && rm -rf /tmp/* \
-   && cd /opt/startup 
+   && cd /opt/startup \
+   && npm install 
 
 ENV PORT 8080
 ENV SSH_PORT 2222
