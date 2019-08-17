@@ -8,8 +8,18 @@ RUN npm install -g pm2 \
      && echo "root:Docker!" | chpasswd \
      && echo "cd /home" >> /etc/bash.bashrc \
      && apt-get update \  
-     && apt-get install --yes --no-install-recommends openssh-server vim curl wget tcptraceroute openrc
-
+     && apt-get install --yes --no-install-recommends \
+      openssh-server \
+      vim \
+      curl \
+      wget \
+      tcptraceroute \
+      openrc \
+      yarn \
+      net-tools \
+      dnsutils \
+      tcpdump \
+      iproute2
 # setup default site
 RUN rm -f /etc/ssh/sshd_config
 COPY startup /opt/startup
