@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/oryx/node:8.0-20190730.1
+FROM mcr.microsoft.com/oryx/node:8.0-20190823.2
 LABEL maintainer="Azure App Services Container Images <appsvc-images@microsoft.com>"
 
 RUN echo "ipv6" >> /etc/modules
