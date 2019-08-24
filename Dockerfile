@@ -34,6 +34,7 @@ RUN chmod -R +x /opt/startup \
    && chmod -R +x /tmp/ssh_setup.sh \
    && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null) \
    && rm -rf /tmp/* \
+   && echo "cd /home" >> /root/.bashrc \
    && cd /opt/startup \
    && npm install 
 
